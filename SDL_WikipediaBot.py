@@ -116,7 +116,7 @@ class SDL_WikipediaBotClient(discord.Client):
                         '⚙️ ' + '**[{0}]({1})**'.format(BOT_NAME, PROJECT_URL) + 
                         '  |  Version  ' + BOT_VERSION + 
                         '  |  Author: **[{0}]({1})**'.format(AUTHOR, AUTHOR_URL) +
-                        '\r\nCurrent Platform: `{0} {1} ({2})`'.format(platform.system(), platform.release(), platform.version())
+                        '\r\nCurrent Platform: `{0} {1}`'.format(platform.system(), platform.release())
                         , inline=False)
 
         # Send embed...
