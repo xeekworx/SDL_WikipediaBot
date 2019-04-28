@@ -139,7 +139,7 @@ def print_separator(length = 79):
 def main(argv):
     print(BOT_NAME + ' Version ' + BOT_VERSION + '\r\nWebsite: ' + AUTHOR_URL)
     print_separator()
-    print('Current Platform: `{0} {1} ({2})`'.format(platform.system(), platform.release(), platform.version()))
+    print('Current Platform: `{0} {1}`'.format(platform.system(), platform.release()))
 
     bot_token = None
     try:
