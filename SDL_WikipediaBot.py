@@ -1,10 +1,9 @@
 import discord
 import requests
-import re
 import platform
 import sys
-from collections import OrderedDict 
 from SDL_WikiParser import SDL_WikiParser
+from SDL_WikiCache import SDL_WikiCache
 
 BOT_NAME = 'SDL_WikipediaBot'
 BOT_VERSION = '1.0a'
@@ -14,6 +13,9 @@ AUTHOR_URL = "https://github.com/xeekworx/"
 PROJECT_URL = "https://github.com/xeekworx/SDL_WikipediaBot"
 BOT_LOGO_URL = "https://github.com/xeekworx/SDL_WikipediaBot/raw/master/images/sdl_wikibot.png"
 LIBSDLWIKI_URL = "https://wiki.libsdl.org/"
+CACHE_FILE = "wikicache.json"
+CACHE_ENABLED = True
+DISPLAY_PLATFORM = False
 DISCORD_MSG_LIMIT = 2000
 DISCORD_EMBED_FIELD_LIMIT = 1024
 EMBED_COLOR = 0xf4c842
@@ -28,7 +30,14 @@ class SDL_WikipediaBotClient(discord.Client):
             print(', ' if not first else '', end='')
             print(guild.name + ' ', end='')
             first = False
-        print('\r\n')
+
+        self.cache = None
+        try:
+            self.cache = SDL_WikiCache(CACHE_FILE) if CACHE_ENABLED else None
+        except:
+            print("Warning: Failed to initialize cache.")
+
+        print()
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -70,12 +79,22 @@ class SDL_WikipediaBotClient(discord.Client):
             # Generate the URLs for SDL's wiki site:
             url = self.create_wiki_url(query)
             url_for_display = self.create_wiki_url(query, False)
-            wiki_content = self.download_wiki_page(url)
+
+            # Try getting cached content or download live content if it's not in the cache.
+            # Also update the cache if possible.
+            cached_content = None
+            try:
+                if self.cache and CACHE_ENABLED:
+                    cached_content = self.cache.query(query)
+            except:
+                pass
+            if not cached_content:
+                wiki_content = self.download_wiki_page(url)
 
             # Delete the looking up message I sent earlier:
             await lastmsg.delete()
 
-            if wiki_content is None or len(wiki_content) < 64:
+            if (not cached_content) and (wiki_content is None or len(wiki_content) < 64):
                 lastmsg = await message.channel.send(
                     "Beep Boop... Failed to find any wiki documents for **{0}**\r\n".format(query) + 
                     "*Do you take me for an idiot? Try again.*")
@@ -83,11 +102,18 @@ class SDL_WikipediaBotClient(discord.Client):
             else:
                 await message.add_reaction('✅')
 
-                parser = SDL_WikiParser(LIBSDLWIKI_URL)
-                result = parser.parse(wiki_content, url_for_display)
-                await self.output_embed(message, result, url_for_display)
+                if not cached_content:
+                    parser = SDL_WikiParser(LIBSDLWIKI_URL)
+                    result = parser.parse(wiki_content, url_for_display)
+                    from_cache = False
+                    self.cache.update(key=query, data=result)
+                    self.cache.save()
+                else:
+                    result = cached_content # cached_content is pre-parsed
+                    from_cache = True
+                await self.output_embed(message, result, url_for_display, from_cache)
 
-    async def output_embed(self, message, parsed_result, url):
+    async def output_embed(self, message, parsed_result, url, from_cache = False):
         # The first and second section of the output will be the title and description of
         # the embed.
         if 'Title' in parsed_result and 'Summary' in parsed_result:
@@ -111,13 +137,12 @@ class SDL_WikipediaBotClient(discord.Client):
                     embed.add_field(name=key.title(), value="This section was too powerful for discord, [Read more...]({0})".format(url + '#' + key.replace(' ', '_')), inline=False)
 
         # Rather than using the embed's footer, use a field with an empty title so that
-        # the footer can have markdown (of which the footer doesn't support).
-        embed.add_field(name='\u200B', value=
-                        '⚙️ ' + '**[{0}]({1})**'.format(BOT_NAME, PROJECT_URL) + 
-                        '  |  Version  ' + BOT_VERSION + 
-                        '  |  Author: **[{0}]({1})**'.format(AUTHOR, AUTHOR_URL) +
-                        '\r\nCurrent Platform: `{0} {1}`'.format(platform.system(), platform.release())
-                        , inline=False)
+        # the footer can have markdown (of which the footer doesn't support).DISPLAY_PLATFORM
+        last_field_value = '⚙️ **[{0}]({1})** | Version {2} | Author: **[{3}]({4})**'.format(BOT_NAME, PROJECT_URL, BOT_VERSION, AUTHOR, AUTHOR_URL)
+        if DISPLAY_PLATFORM:
+            last_field_value += '\r\nCurrent Platform: `{0} {1}`'.format(platform.system(), platform.release())
+        embed.add_field(name='\u200B', value=last_field_value, inline=False)
+        embed.set_footer(text="This content is live" if not from_cache else "This content is cached")
 
         # Send embed...
         await message.channel.send(embed=embed)
@@ -139,7 +164,7 @@ def print_separator(length = 79):
 def main(argv):
     print(BOT_NAME + ' Version ' + BOT_VERSION + '\r\nWebsite: ' + AUTHOR_URL)
     print_separator()
-    print('Current Platform: `{0} {1}`'.format(platform.system(), platform.release()))
+    print('Current Platform: {0} {1}'.format(platform.system(), platform.release()))
 
     bot_token = None
     try:

@@ -23,6 +23,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="SDL_WikiCache.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="SDL_WikiParser.py">
       <SubType>Code</SubType>
     </Compile>
