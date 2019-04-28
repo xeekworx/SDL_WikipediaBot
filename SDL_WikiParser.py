@@ -70,10 +70,10 @@ def generate_emojis(text):
 
 def dealwith_tables(text):
     result = text
-    result = result.replace("||'''", "**")
-    result = result.replace("'''||", "** - ")
+    result = result.replace("||'''", "**`")
+    result = result.replace("'''||", "`** - ")
     result = result.replace('||', '')
-    result = result.replace("'''", '**')
+    #result = result.replace("'''", '**')
     result = result.strip()
     return result
 
@@ -96,14 +96,3 @@ def generate_links(text, base_url, source_url):
         result = result.replace(old, new)
 
     return result
-
-#def test():
-#    #r = requests.get(r'https://wiki.libsdl.org/SDL_RenderReadPixels?action=raw')
-#    #content = r.content
-#    with open('test.txt', 'rb') as f:
-#        content = f.read()
-
-#    parser = SDL_WikiParser()
-#    parser.parse(content)
-
-#test()
