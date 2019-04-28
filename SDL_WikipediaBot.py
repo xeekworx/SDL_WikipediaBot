@@ -1,6 +1,8 @@
 import discord
 import requests
 import re
+import platform
+import sys
 from collections import OrderedDict 
 from SDL_WikiParser import SDL_WikiParser
 
@@ -18,7 +20,15 @@ EMBED_COLOR = 0xf4c842
 
 class SDL_WikipediaBotClient(discord.Client):
     async def on_ready(self):
-        print('Logged on as {0}!'.format(self.user))
+        print('Logged on as {0}'.format(self.user))
+
+        print('Current Servers: ', end='')
+        first = True
+        async for guild in self.fetch_guilds():
+            print(', ' if not first else '', end='')
+            print(guild.name + ' ', end='')
+            first = False
+        print('\r\n')
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -102,7 +112,12 @@ class SDL_WikipediaBotClient(discord.Client):
 
         # Rather than using the embed's footer, use a field with an empty title so that
         # the footer can have markdown (of which the footer doesn't support).
-        embed.add_field(name='\u200B', value='⚙️ ' + '**[{0}]({1})**'.format(BOT_NAME, PROJECT_URL) + '  |  Version  ' + BOT_VERSION + '  |  Author: **[{0}]({1})**'.format(AUTHOR, AUTHOR_URL), inline=False)
+        embed.add_field(name='\u200B', value=
+                        '⚙️ ' + '**[{0}]({1})**'.format(BOT_NAME, PROJECT_URL) + 
+                        '  |  Version  ' + BOT_VERSION + 
+                        '  |  Author: **[{0}]({1})**'.format(AUTHOR, AUTHOR_URL) +
+                        '\r\nCurrent Platform: `{0} {1} ({2})`'.format(platform.system(), platform.release(), platform.version())
+                        , inline=False)
 
         # Send embed...
         await message.channel.send(embed=embed)
@@ -118,23 +133,32 @@ class SDL_WikipediaBotClient(discord.Client):
         except:
             return None
 
-    def separator(self, length=32):
-        return "{0}{1}{0}".format("\r\n", "▬"*length);
-    
+def print_separator(length = 79):
+    print('─'*length)
 
-print(BOT_NAME + ' Version ' + BOT_VERSION + '\r\nWebsite: ' + AUTHOR_URL)
-print('─'*79)
+def main(argv):
+    print(BOT_NAME + ' Version ' + BOT_VERSION + '\r\nWebsite: ' + AUTHOR_URL)
+    print_separator()
+    print('Current Platform: `{0} {1} ({2})`'.format(platform.system(), platform.release(), platform.version()))
 
-bot_token = None
-try:
-    with open('token.txt', 'r') as f:
-        bot_token = f.read()
-except:
-    print("Exception trying to open or read the bot token from 'token.txt'!\r\n" +
-          "1. Go to your Discord Applications Dashboard here: https://discordapp.com/developers/applications/\r\n" + 
-          "2. Go to your app's page or generate a new application; then go to the bot section\r\n" +
-          "3. Generate a Bot token and put it in 'token.txt' where this script will find it")
+    bot_token = None
+    try:
+        with open('token.txt', 'r') as f:
+            bot_token = f.read()
+    except:
+        print()
+        print("Exception trying to open or read the bot token from 'token.txt'!\r\n" +
+              "1. Go to your Discord Applications Dashboard here: https://discordapp.com/developers/applications/\r\n" + 
+              "2. Go to your app's page or generate a new application; then go to the bot section\r\n" +
+              "3. Generate a Bot token and put it in 'token.txt' where this script will find it")
+        return -1
 
-if bot_token:
-    client = SDL_WikipediaBotClient()
-    client.run(bot_token.strip())
+    if bot_token:
+        print("Token found, logging on...")
+        client = SDL_WikipediaBotClient()
+        client.run(bot_token.strip())
+
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
