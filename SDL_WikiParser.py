@@ -70,11 +70,21 @@ def generate_emojis(text):
 
 def dealwith_tables(text):
     result = text
-    result = result.replace("||'''", "**`")
-    result = result.replace("'''||", "`** - ")
-    result = result.replace('||', '')
-    #result = result.replace("'''", '**')
-    result = result.strip()
+    # Only handle text that's detected to have columns in it:
+    if "||" in text:
+        lines = list(filter(None, text.splitlines()))
+        # For each line, separate the columns, then assume the last
+        # item is the description, and all items before it to be
+        # the parameter's name and/or type:
+        for i in range(len(lines)):
+            columns = list(filter(None, lines[i].split('||')))
+            param = ' '.join(columns[:-1]).replace('||', '').replace("'", '')
+            desc = columns[-1].replace('||', '')
+            lines[i] = "**`{0}`** - {1}".format(param, desc)
+
+        result = '\r\n'.join(lines)
+        result = result.strip()
+
     return result
 
 def generate_links(text, base_url, source_url):

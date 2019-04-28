@@ -67,8 +67,8 @@ class SDL_WikipediaBotClient(discord.Client):
 
             if wiki_content is None or len(wiki_content) < 64:
                 lastmsg = await message.channel.send(
-                    "Beep Boop... Failed to find any wiki documents for **{0}**\r\n" + 
-                    "*Do you take me for an idiot? Try again.*".format(query))
+                    "Beep Boop... Failed to find any wiki documents for **{0}**\r\n".format(query) + 
+                    "*Do you take me for an idiot? Try again.*")
                 await message.add_reaction('👎')
             else:
                 await message.add_reaction('✅')
@@ -91,7 +91,11 @@ class SDL_WikipediaBotClient(discord.Client):
             if key.lower() == 'title' or key.lower() == 'summary':
                 continue
             else:
-                if len(value) <= DISCORD_EMBED_FIELD_LIMIT:
+                if  not value or \
+                    'You can add useful comments here' in value or \
+                    'You can add your code example here' in value:
+                    continue # There isn't anything in this section worth displaying
+                elif len(value) <= DISCORD_EMBED_FIELD_LIMIT:
                     embed.add_field(name=key.title(), value=value, inline=False)
                 else:
                     embed.add_field(name=key.title(), value="This section was too powerful for discord, [Read more...]({0})".format(url + '#' + key.replace(' ', '_')), inline=False)
