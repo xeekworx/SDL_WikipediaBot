@@ -6,11 +6,11 @@ from SDL_WikiParser import SDL_WikiParser
 
 BOT_NAME = 'SDL_WikipediaBot'
 BOT_VERSION = '1.0a'
-BOT_TOKEN = 'NTcxMDcwOTAwOTk3MTkzNzQw.XMJNEw.FRT-EmZHUX6n5jpFLJ_HiwSwULY'
 COMMAND_PREFIX = '!'
 AUTHOR = "Xeek#8773"
 AUTHOR_URL = "https://github.com/xeekworx/"
-BOT_LOGO_URL = "https://xeek.xyz/sdl_wikibot_sm.png"
+PROJECT_URL = "https://github.com/xeekworx/SDL_WikipediaBot"
+BOT_LOGO_URL = "https://github.com/xeekworx/SDL_WikipediaBot/raw/master/images/sdl_wikibot.png"
 LIBSDLWIKI_URL = "https://wiki.libsdl.org/"
 DISCORD_MSG_LIMIT = 2000
 DISCORD_EMBED_FIELD_LIMIT = 1024
@@ -18,8 +18,6 @@ EMBED_COLOR = 0xf4c842
 
 class SDL_WikipediaBotClient(discord.Client):
     async def on_ready(self):
-        print(BOT_NAME + ' Version ' + BOT_VERSION + '\r\nWebsite: ' + AUTHOR_URL)
-        print('─'*79)
         print('Logged on as {0}!'.format(self.user))
 
     async def on_message(self, message):
@@ -100,7 +98,7 @@ class SDL_WikipediaBotClient(discord.Client):
 
         # Rather than using the embed's footer, use a field with an empty title so that
         # the footer can have markdown (of which the footer doesn't support).
-        embed.add_field(name='\u200B', value='⚙️ ' + BOT_NAME + '  |  Version  ' + BOT_VERSION + '  |  Author: **[{0}]({1})**'.format(AUTHOR, AUTHOR_URL), inline=False)
+        embed.add_field(name='\u200B', value='⚙️ ' + '**[{0}]({1})**'.format(BOT_NAME, PROJECT_URL) + '  |  Version  ' + BOT_VERSION + '  |  Author: **[{0}]({1})**'.format(AUTHOR, AUTHOR_URL), inline=False)
 
         # Send embed...
         await message.channel.send(embed=embed)
@@ -118,7 +116,21 @@ class SDL_WikipediaBotClient(discord.Client):
 
     def separator(self, length=32):
         return "{0}{1}{0}".format("\r\n", "▬"*length);
+    
 
+print(BOT_NAME + ' Version ' + BOT_VERSION + '\r\nWebsite: ' + AUTHOR_URL)
+print('─'*79)
 
-client = SDL_WikipediaBotClient()
-client.run(BOT_TOKEN)
+bot_token = None
+try:
+    with open('token.txt', 'r') as f:
+        bot_token = f.read()
+except:
+    print("Exception trying to open or read the bot token from 'token.txt'!\r\n" +
+          "1. Go to your Discord Applications Dashboard here: https://discordapp.com/developers/applications/\r\n" + 
+          "2. Go to your app's page or generate a new application; then go to the bot section\r\n" +
+          "3. Generate a Bot token and put it in 'token.txt' where this script will find it")
+
+if bot_token:
+    client = SDL_WikipediaBotClient()
+    client.run(bot_token.strip())
