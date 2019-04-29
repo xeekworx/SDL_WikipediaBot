@@ -38,6 +38,7 @@ class SDL_WikipediaBotClient(discord.Client):
             print("Warning: Failed to initialize cache.")
 
         print()
+        await self.change_wiki_presence(False)
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -72,46 +73,48 @@ class SDL_WikipediaBotClient(discord.Client):
                     "*Who are you? Mary Poppins? That query is too long, is expialidocious one of yoru favorite words?*\r\n" + 
                     "Try this: **http://bfy.tw/NOLm**")
                 await message.add_reaction('☂️')
-                return
             else:
+                await self.change_wiki_presence(True)
                 lastmsg = await message.channel.send("`Looking up {0}...`".format(query))
 
-            # Generate the URLs for SDL's wiki site:
-            url = self.create_wiki_url(query)
-            url_for_display = self.create_wiki_url(query, False)
+                # Generate the URLs for SDL's wiki site:
+                url = self.create_wiki_url(query)
+                url_for_display = self.create_wiki_url(query, False)
 
-            # Try getting cached content or download live content if it's not in the cache.
-            # Also update the cache if possible.
-            cached_content = None
-            try:
-                if self.cache and CACHE_ENABLED:
-                    cached_content = self.cache.query(query)
-            except:
-                pass
-            if not cached_content:
-                wiki_content = self.download_wiki_page(url)
+                # Try getting cached content or download live content if it's not in the cache.
+                # Also update the cache if possible.
+                async with message.channel.typing():
+                    cached_content = None
+                    try:
+                        if self.cache and CACHE_ENABLED:
+                            cached_content = self.cache.query(query)
+                    except:
+                        pass
+                    if not cached_content:
+                        wiki_content = self.download_wiki_page(url)
 
-            # Delete the looking up message I sent earlier:
-            await lastmsg.delete()
+                # Delete the looking up message I sent earlier:
+                await lastmsg.delete()
 
-            if (not cached_content) and (wiki_content is None or len(wiki_content) < 64):
-                lastmsg = await message.channel.send(
-                    "Beep Boop... Failed to find any wiki documents for **{0}**\r\n".format(query) + 
-                    "*Do you take me for an idiot? Try again.*")
-                await message.add_reaction('👎')
-            else:
-                await message.add_reaction('✅')
-
-                if not cached_content:
-                    parser = SDL_WikiParser(LIBSDLWIKI_URL)
-                    result = parser.parse(wiki_content, url_for_display)
-                    from_cache = False
-                    self.cache.update(key=query, data=result)
-                    self.cache.save()
+                if (not cached_content) and (wiki_content is None or len(wiki_content) < 64):
+                    lastmsg = await message.channel.send(
+                        "Beep Boop... Failed to find any wiki documents for **{0}**\r\n".format(query) + 
+                        "*Do you take me for an idiot? Try again.*")
+                    await message.add_reaction('👎')
                 else:
-                    result = cached_content # cached_content is pre-parsed
-                    from_cache = True
-                await self.output_embed(message, result, url_for_display, from_cache)
+                    await message.add_reaction('✅')
+
+                    if not cached_content:
+                        parser = SDL_WikiParser(LIBSDLWIKI_URL)
+                        result = parser.parse(wiki_content, url_for_display)
+                        from_cache = False
+                        self.cache.update(key=query, data=result)
+                        self.cache.save()
+                    else:
+                        result = cached_content # cached_content is pre-parsed
+                        from_cache = True
+                    await self.output_embed(message, result, url_for_display, from_cache)
+                    await self.change_wiki_presence(False)
 
     async def output_embed(self, message, parsed_result, url, from_cache = False):
         # The first and second section of the output will be the title and description of
@@ -157,6 +160,15 @@ class SDL_WikipediaBotClient(discord.Client):
             return r.content
         except:
             return None
+
+    async def change_wiki_presence(self, is_wiking = True):
+        if is_wiking:
+            game = discord.Game("with SDL's Wiki")
+            await self.change_presence(status=discord.Status.online, activity=game)
+        else:
+            game = discord.Game("nothing right now")
+            await self.change_presence(status=discord.Status.idle, activity=game)
+
 
 def print_separator(length = 79):
     print('─'*length)
