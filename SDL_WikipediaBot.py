@@ -6,7 +6,7 @@ from SDL_WikiParser import SDL_WikiParser
 from SDL_WikiCache import SDL_WikiCache
 
 BOT_NAME = 'SDL_WikipediaBot'
-BOT_VERSION = '1.0a'
+BOT_VERSION = 'v0.1-alpha'
 COMMAND_PREFIX = '!'
 AUTHOR = "Xeek#8773"
 AUTHOR_URL = "https://github.com/xeekworx/"
