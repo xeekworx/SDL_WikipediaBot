@@ -8,7 +8,7 @@ Type=simple
 ExecStart=python3 /home/bots/SDL_WikipediaBot/SDL_WikipediaBot.py
 WorkingDirectory=/home/bots/SDL_WikipediaBot
 User=bots
-Gropu=bots
+Group=bots
 
 [Install]
 WantedBy=multi-user.target
