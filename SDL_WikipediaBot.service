@@ -1,0 +1,14 @@
+[Unit]
+Description=SDL_WikipediaBot
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=python3 /home/bots/SDL_WikipediaBot/SDL_WikipediaBot.py
+WorkingDirectory=/home/bots/SDL_WikipediaBot
+User=bots
+Gropu=bots
+
+[Install]
+WantedBy=multi-user.target
