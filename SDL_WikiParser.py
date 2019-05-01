@@ -24,22 +24,25 @@ class SDL_WikiParser(object):
 
         result = OrderedDict() # Order is important when the sections are displayed
         is_title = True # The first section will be split into 'Title' and 'Summary'
+        is_draft = True if 'DRAFT' in content else False
 
         for section in m:
             tmp = section.split("=\r\n", 1)
-            section_title = tmp[0].replace('=', '').strip()
-            section_content = clean_up_text(tmp[1])
-            section_content = syntax_highlight(section_content)
-            section_content = generate_emojis(section_content)
-            section_content = dealwith_tables(section_content)
-            section_content = generate_links(section_content, self.wiki_url, source_url)
+            if len(tmp) > 1:
+                section_title = tmp[0].replace('=', '').strip()
+                section_title += ' (Draft)' if is_draft and is_title else ''
+                section_content = clean_up_text(tmp[1])
+                section_content = syntax_highlight(section_content)
+                section_content = generate_emojis(section_content)
+                section_content = dealwith_tables(section_content)
+                section_content = generate_links(section_content, self.wiki_url, source_url)
 
-            if is_title:
-                result['Title'] = section_title
-                result['Summary'] = section_content.strip('\r\n')
-                is_title = False
-            else:
-                result[section_title] = section_content
+                if is_title:
+                    result['Title'] = section_title
+                    result['Summary'] = section_content.strip('\r\n')
+                    is_title = False
+                else:
+                    result[section_title] = section_content
 
         return result
 

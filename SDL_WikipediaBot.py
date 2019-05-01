@@ -30,10 +30,12 @@ class SDL_WikipediaBotClient(discord.Client):
             print(', ' if not first else '', end='')
             print(guild.name + ' ', end='')
             first = False
+        print()
 
         self.cache = None
         try:
             self.cache = SDL_WikiCache(CACHE_FILE) if CACHE_ENABLED else None
+            print("Cache enabled.")
         except:
             print("Warning: Failed to initialize cache.")
 
@@ -108,8 +110,9 @@ class SDL_WikipediaBotClient(discord.Client):
                         parser = SDL_WikiParser(LIBSDLWIKI_URL)
                         result = parser.parse(wiki_content, url_for_display)
                         from_cache = False
-                        self.cache.update(key=query, data=result)
-                        self.cache.save()
+                        if self.cache:
+                            self.cache.update(key=query, data=result)
+                            self.cache.save()
                     else:
                         result = cached_content # cached_content is pre-parsed
                         from_cache = True
